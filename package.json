@@ -1,5 +1,5 @@
 {
-  "version": "4.1.6",
+  "version": "4.1.7",
   "description": "A React component for rendering an interactive img or word cloud on canvas",
   "license": "MIT",
   "main": "dist/index.js",
@@ -9,9 +9,6 @@
     "dist",
     "src"
   ],
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
