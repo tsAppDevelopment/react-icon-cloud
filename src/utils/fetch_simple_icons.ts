@@ -1,32 +1,66 @@
-import {SimpleIcon} from '../types/simple_icon'
-import {getSlugsPath} from './get_slugs_path'
-import {getSlugHexs} from './get_slug_hexs'
+import type {SimpleIcon} from '../types/simple_icon'
+
+export const extractHtmlProperty = (
+  str: string,
+  property: string,
+  matchType: '>' | '='
+) => {
+  const propIndex = str.indexOf(property);
+  if (propIndex === -1) return '';
+  if (matchType === '=') {
+    const eqIndex = str.indexOf('=', propIndex + property.length);
+    if (eqIndex === -1) return '';
+    const startIndex = eqIndex + 2;
+    const endIndex = str.indexOf('"', startIndex);
+    if (startIndex >= endIndex) return '';
+    return str.substring(startIndex, endIndex);
+  }
+  if (matchType === '>') {
+    const gtIndex = str.indexOf('>', propIndex + property.length);
+    if (gtIndex === -1) return '';
+    const startIndex = gtIndex + 1;
+    const endIndex = str.indexOf('</', startIndex);
+    if (startIndex >= endIndex) return '';
+    return str.substring(startIndex, endIndex);
+  }
+  return '';
+}
+
+export const getSimpleIconFromText = (slug: string, resText: string): SimpleIcon => {
+  return {
+    slug,
+    hex: extractHtmlProperty(resText, 'fill', '='),
+    title: extractHtmlProperty(resText, 'title', '>'),
+    path: extractHtmlProperty(resText, 'd', '='),
+  }
+}
+
+export const fetchSimpleIconText = async (slug: string) => {
+  const res = await fetch(`https://cdn.simpleicons.org/${slug}`)
+  const text = await res.text()
+  return text
+}
+
+const cache: Record<string, SimpleIcon> = {};
 
 export const fetchSimpleIcons = async ({slugs}: {slugs: string[]}) => {
-  const [paths, {hexs, cache}] = await Promise.all([
-    getSlugsPath(slugs),
-    getSlugHexs(slugs),
-  ])
-  const map = {} as any
-  hexs.forEach((hex) => {
-    map[hex.slug] = hex
-  })
-  paths.forEach((path) => {
-    map[path.slug].path = path.path
-  })
-  slugs.forEach((s) => {
-    const o = map[s]
-    if (!o.hex || !o.path) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error(
-          `'react-icon-cloud/fetchSimpleIcons': the response of ${o.slug} was malformed and it will be ignored.`
-        )
-      }
-      delete map[s]
+  const simpleIcons: Record<string, SimpleIcon> = {};
+  const promises: Promise<void>[] = [];
+  for (const slug of slugs) {
+    if (cache[slug]) {
+      simpleIcons[slug] = cache[slug];
+      continue;
     }
-  })
+    promises.push(
+      fetchSimpleIconText(slug).then((text) => {
+        const icon = getSimpleIconFromText(slug, text);
+        simpleIcons[slug] = icon;
+      })
+    );
+  }
+  await Promise.allSettled(promises);
   return {
-    simpleIcons: map as Record<string, SimpleIcon>,
+    simpleIcons,
     allIcon: cache!,
   }
 }
