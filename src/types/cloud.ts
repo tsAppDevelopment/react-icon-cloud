@@ -1,5 +1,5 @@
-import React from 'react'
-import {IOptions} from './options'
+import React, { ReactNode } from 'react'
+import { IOptions } from './options'
 
 /**
  * @param canvasProps Attributes passed to the underlying canvas element
@@ -10,7 +10,7 @@ import {IOptions} from './options'
  */
 export type ICloud = {
   canvasProps?: React.HTMLAttributes<HTMLCanvasElement>
-  children: React.ReactFragment
+  children: ReactNode
   containerProps?: React.HTMLAttributes<HTMLDivElement>
   id?: string | number
   options?: IOptions

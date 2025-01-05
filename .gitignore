@@ -6,3 +6,4 @@ dist
 *.mdb
 coverage
 .parcel-cache
+.idea
